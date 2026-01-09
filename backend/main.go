@@ -16,19 +16,24 @@ import (
 )
 
 type RelayRequest struct {
-	Dest                 string  `json:"dest"`
-	Value                string  `json:"value"`
-	GasLimit             string  `json:"gasLimit"`
-	StorageDepositLimit  *string `json:"storageDepositLimit"`
-	DataHex              string  `json:"dataHex"`
-	Signer               string  `json:"signer"`
-	CodeHash             string  `json:"codeHash"`
+	Dest                string  `json:"dest"`
+	Value               string  `json:"value"`
+	GasLimit            string  `json:"gasLimit"`
+	StorageDepositLimit *string `json:"storageDepositLimit"`
+	DataHex             string  `json:"dataHex"`
+	Signer              string  `json:"signer"`
+	CodeHash            string  `json:"codeHash"`
 }
 
 type RelayResponse struct {
 	Status string `json:"status"`
 	TxHash string `json:"txHash,omitempty"`
 	Error  string `json:"error,omitempty"`
+}
+
+type VerifyResponse struct {
+	Ok    bool   `json:"ok"`
+	Error string `json:"error,omitempty"`
 }
 
 type Limiter struct {
@@ -101,6 +106,28 @@ func main() {
 			next.ServeHTTP(w, r)
 		})
 	})
+
+	router.HandleFunc("/secret/verify", func(w http.ResponseWriter, r *http.Request) {
+		codeHash := r.URL.Query().Get("codeHash")
+		if codeHash == "" {
+			w.WriteHeader(http.StatusBadRequest)
+			json.NewEncoder(w).Encode(VerifyResponse{Ok: false, Error: "missing codeHash"})
+			return
+		}
+		ok, err := rdb.SIsMember(ctx, "secret:valid", codeHash).Result()
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			json.NewEncoder(w).Encode(VerifyResponse{Ok: false, Error: "redis error"})
+			return
+		}
+		if !ok {
+			w.WriteHeader(http.StatusForbidden)
+			json.NewEncoder(w).Encode(VerifyResponse{Ok: false, Error: "invalid code"})
+			return
+		}
+		json.NewEncoder(w).Encode(VerifyResponse{Ok: true})
+	}).Methods("GET")
+
 	router.HandleFunc("/relay/mint", func(w http.ResponseWriter, r *http.Request) {
 		ip := r.Header.Get("X-Forwarded-For")
 		if ip == "" {
@@ -129,6 +156,18 @@ func main() {
 		if req.CodeHash == "" {
 			w.WriteHeader(http.StatusBadRequest)
 			json.NewEncoder(w).Encode(RelayResponse{Status: "error", Error: "missing code hash"})
+			return
+		}
+
+		valid, err := rdb.SIsMember(ctx, "secret:valid", req.CodeHash).Result()
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			json.NewEncoder(w).Encode(RelayResponse{Status: "error", Error: "redis error"})
+			return
+		}
+		if !valid {
+			w.WriteHeader(http.StatusForbidden)
+			json.NewEncoder(w).Encode(RelayResponse{Status: "error", Error: "无效的兑换码"})
 			return
 		}
 		st, err := lockCode(ctx, rdb, req.CodeHash)
