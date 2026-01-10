@@ -1,5 +1,7 @@
 # Whale-Vault — Web3-Powered Digital Publishing and Asset Vault Protocol
 
+> Copyright Notice: This project's source code is open-source and developed for the Polkadot Hackathon. Commercial use of any code, documents, or derivatives from this project is prohibited without written permission from the project team, and violators will be held legally liable.
+
 ### 1. Executive Summary
 
 Whale-Vault is a decentralized digital publishing and asset management protocol built on Polkadot and Arweave, focused on solving the three core pain points of the traditional publishing industry: **counterfeiting ineffectiveness, opaque settlement, and content censorship**.
@@ -63,7 +65,7 @@ Whale-Vault adopts a **“Web2 entry + Web3 sovereignty”** hybrid architecture
 ### 4. Technical Barriers and Architecture
 
 - **Underlying Layer**: Polkadot + Scaffold DOT for high performance and cross-chain expansion (XCM).
-- **Contracts**: Ink! (Rust) implements core logic, compatible with Solidity migration.
+- **Contracts**: Solidity implements core logic.
 - **Zero-Barrier Experience**: Relayer covers gas fees; ordinary readers can scan and use without a wallet or cryptocurrency.
 - **Privacy and Security**: Content is asymmetrically encrypted and decryptable only by NFT holders; Arweave ensures permanent verifiability.
 - **Competitive Advantage**: No direct competitor in the Polkadot ecosystem for physical book + NFT anti-counterfeiting; Whale-Vault uniquely bridges physical and digital worlds.
@@ -71,7 +73,6 @@ Whale-Vault adopts a **“Web2 entry + Web3 sovereignty”** hybrid architecture
 ### 5. Team
 
 - **Whale3070 (Team Lead)**: 8 years of content creation and community operations experience, responsible for product philosophy and UX design.
-- **Jessie (Smart Contract)**: Senior Polkadot Ink! and Solidity developer, responsible for ownership verification and settlement contracts.
 - **Hank (Backend & Relayer)**: Distributed systems architect, responsible for gasless high-concurrency and stability.
 - **Evan (Asset & Metadata)**: Arweave ecosystem expert, ensuring true permanence and decentralized sovereignty of vault assets.
 
