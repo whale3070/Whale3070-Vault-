@@ -10,7 +10,8 @@ Whale Vault 是一个围绕 **实体书兑换码 Hash Code** 的 NFT 金库与�
 
 - 前端：React + Vite + Tailwind CSS 单页应用
 - 钱包与链交互：Polkadot{.js} 扩展 + `@polkadot/api` / `@polkadot/api-contract`
-- 后端：Go 实现的元交易 Relay Server + Redis 统计
+- 后端：Go 实现的元交易 Relay Server（内存日志 + 本地文件）
+- 合约示例：`QuickNFT.sol`（基于 OpenZeppelin 的 ERC721，用于本地快速演示）
 
 ---
 
@@ -133,8 +134,8 @@ Whale Vault 是一个围绕 **实体书兑换码 Hash Code** 的 NFT 金库与�
 
 - `github.com/gorilla/mux`
 - `golang.org/x/time/rate`
-- `github.com/redis/go-redis/v9`
-- （预留）`github.com/centrifuge/go-substrate-rpc-client/v4` 用于接入真实链上调用
+- 标准库 `net/http` / `encoding/json` 等
+- （可选扩展）`github.com/centrifuge/go-substrate-rpc-client/v4` 等，用于接入真实链上调用
 
 ---
 
@@ -168,18 +169,8 @@ npm run build
 
 #### 前置依赖
 
-- Go 1.20+
-- Redis 实例（本地或远程）
-
-#### 环境变量
-
-- `REDIS_ADDR`（可选）
-  - Redis 地址，默认 `127.0.0.1:6379`
-
-> 说明：当前 `main.go` 中尚未接入真实 WebSocket 节点与链上签名逻辑，如需将 Demo 升级为真正代付 Gas 的 Relay Server，可基于 go-substrate-rpc-client 扩展新增：
->
-> - `WS_ENDPOINT`：链的 WebSocket 节点（如 `wss://ws.azero.dev`）
-> - `RELAYER_SEED`：平台方代付 Gas 的账户种子（sr25519）
+- Go 1.20+（或与你 go.mod 对应的版本）
+- 可读写的 `backend/hash-code.txt` 文件（用于维护兑换码状态）
 
 #### 启动后端
 
@@ -189,8 +180,6 @@ go run main.go
 ```
 
 默认监听：`http://localhost:8080`
-
-同时应用了宽松的 CORS 设置，方便前端本地调试。
 
 ---
 
@@ -285,7 +274,7 @@ go run main.go
 
 - 接收前端提交的领取请求与接收地址
 - 基于兑换码 Hash Code（`codeHash`）做唯一性锁防刷
-- 生成占位用的 `txHash`，写入 Redis 日志，供前端看板展示
+- 生成占位用的 `txHash`，写入进程内内存日志，供前端看板展示
 
 未来可在此基础上接入真实链节点，由后端使用平台账户代用户发送交易、代付 Gas。
 
@@ -367,13 +356,43 @@ go run main.go
 }
 ```
 
-- `ok = true`：该兑换码在 Redis 集合 `secret:valid` 中存在，可以继续后续流程。
+- `ok = true`：该兑换码在后端内存中的「有效兑换码集合」中存在，可以继续后续流程（初始数据来源为 `hash-code.txt` 文本文件）。
 - `ok = false` 且包含 `error` 字段：
-  - `invalid code`：兑换码未登记或已失效。
-  - `redis error`：后端存储访问异常。
+  - `invalid code`：兑换码未登记或已失效（不在有效集合中）。
+  - `code used`：兑换码已被使用（在 `hash-code.txt` 中被标记为 `USED:` 前缀行）。
   - 当缺少 `codeHash` 时，接口返回 400，并在响应体中给出 `missing codeHash` 错误信息。
 
-> 说明：`/relay/mint` 在处理免 Gas 铸造时也会再次检查 `codeHash` 是否在 `secret:valid` 中，并结合一次性锁（`lockCode`）确保每个兑换码仅能成功使用一次。
+> 说明：`/relay/mint` 在处理免 Gas 铸造时也会再次检查 `codeHash` 是否有效，并结合一次性锁（`lockCode`）确保每个兑换码仅能成功使用一次；成功后会在内存和 `hash-code.txt` 中标记该兑换码已使用。
+
+---
+
+### 6.4 GET `/`（状态探针）
+
+用途：简单健康检查，返回后端运行状态与可用服务列表，便于监控与排障。
+
+示例响应（部分字段）：
+
+```json
+{
+  "status": "Whale Vault Backend is Running",
+  "services": {
+    "relay": "active",
+    "matrix": "active"
+  },
+  "endpoints": {
+    "relay": "/relay/mint",
+    "verify": "/secret/verify",
+    "metrics": "/metrics/mint",
+    "matrix_invite": "/api/matrix/test-invite"
+  }
+}
+```
+
+### 6.5 POST `/api/matrix/test-invite`
+
+用途：示例 Matrix 邀请接口，接受一个 `matrixId` 并向预配置的房间发起邀请请求。
+
+> 说明：当前 Demo 中使用的是示例 Access Token，生产环境务必改为通过环境变量注入密钥，并限制权限与房间 ID。
 
 ---
 ## 7. 与合约的主要交互点
@@ -423,16 +442,15 @@ npm run build
 
 > 生产环境下，请将 `src/config/backend.ts` 中的 `BACKEND_URL` 修改为前端实际访问到的后端地址。以当前示例为：`http://198.55.109.102`（通过 Nginx 反向代理到本机 8080 端口）。
 
-### 9.2 启动 Go Relay Server（可选但建议）
+### 9.2 启动 Go Relay Server
 
-在服务器上准备好 Go 与 Redis，然后：
+在服务器上准备好 Go 环境，然后：
 
 ```bash
 # 1. 进入后端目录
 cd backend
 
-# 2.（可选）配置 Redis 地址，不配置则默认 127.0.0.1:6379
-export REDIS_ADDR="127.0.0.1:6379"
+# 2. 确认 `hash-code.txt` 中已经写入待发放的兑换码（每行一个，已使用的行以 `USED:` 前缀标记）
 
 # 3. 启动后端（开发/测试时可以直接用 go run）
 go run main.go
@@ -490,15 +508,4 @@ Nginx 会将这些请求转发到同一台机器上的 Go 后端（端口 8080�
 4. 在 `/admin/batch` 导入 CSV 文件，批量配置书籍授权：
    - `book_id,secret_code` → 前端计算 SHA-256 哈希 → 调用 `add_book_batch`
 5. 在 `/admin/withdraw` 查看可提取余额，并点击「立即提现」调用 `pull_funds()` 将收益转入当前地址
-
----
-
-## 11. 后续可扩展方向
-
-本 README 基于当前实现状态总结，后续可以在此基础上扩展：
-
-- 将 Mock 数据完全替换为真实链上统计与后端 `/metrics/mint`
-- 为作者 / 出版社增加多角色权限控制
-- 增加多链配置与热切换（例如在配置中支持多个预设网络）
-- 为合约与后端接口补充单元测试与集成测试
 
