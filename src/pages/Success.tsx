@@ -1,3 +1,8 @@
+/*
+ * 版权所有 (C) [2026] [whale3070/ Whale-Valut-NFT团队]
+ * 本项目基于 CC BY-NC 4.0 协议开源，禁止第三方商用（详见仓库 LICENSE 文件）。
+ * 著作权人保留本项目的商业使用权。
+ */
 import React, { useEffect, useMemo, useState } from 'react'
 import { useSearchParams, Link } from 'react-router-dom'
 import { useChainConfig } from '../state/useChainConfig'
