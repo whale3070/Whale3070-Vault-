@@ -63,7 +63,7 @@ Whale-Vault 采用 **“Web2 入口 + Web3 主权”** 的混合架构，重构�
 ### 4. 技术壁垒与架构 (Technical Architecture)
 
 - **底层**：Polkadot + Scaffold DOT，提供高性能与跨链扩展（XCM）。
-- **合约**：Ink!（Rust）实现核心逻辑，兼容Solidity迁移。
+- **合约**：Solidity实现核心逻辑，兼容Solidity迁移。
 - **零门槛体验**：Relayer 代付 Gas，普通读者扫码即用，无需钱包或加密货币。
 - **隐私与安全**：内容非对称加密，仅NFT持有者可解密；Arweave 确保永久可验证。
 - **竞争优势**：Polkadot生态中暂无直接对标实体书+NFT防伪项目，Whale-Vault 填补实体-数字桥接空白。
@@ -71,7 +71,6 @@ Whale-Vault 采用 **“Web2 入口 + Web3 主权”** 的混合架构，重构�
 ### 5. 团队介绍 (Team)
 
 - **Whale3070 (Team Lead)**：8年内容创作与社区运营经验，负责产品哲学与用户体验设计。
-- **Jessie (Smart Contract)**：Polkadot Ink! 与Solidity资深开发者，负责权属验证与分账合约。
 - **Hank (Backend & Relayer)**：分布式系统架构师，负责Gasless高并发与稳定性。
 - **Evan (Asset & Metadata)**：Arweave生态专家，确保内容永久性与分布式存储。
 
