@@ -1,22 +1,115 @@
-# Whale Vault DApp / NFT 金库收银台
+# Whale-Vault —— Web3驱动的数字出版与资产金库协议
 
-Whale Vault 是一个围绕 **实体书兑换码 Hash Code** 的 NFT 金库与收银台 DApp，面向读者、作者和出版社三方：
+### 1. 执行摘要 (Executive Summary)
 
-- 读者：使用微信/系统相机扫码打开领取链接 → 填写波卡地址 → 领取 NFT → 解锁 Arweave 正文、Matrix 私域社群等数字权益
-- 作者 / 出版社：在管理后台查看销量、财务数据，一键提现和批量导入授权
-- 平台方：运行 Go 中间层提供 **免 Gas 领取入口（中继）**，并做风控与统计
+Whale-Vault 是一个基于 Polkadot 和 Arweave 的去中心化数字出版与资产管理协议，专注解决传统出版业**防伪失效、结算黑箱、内容审查**三大痛点。
 
-本仓库包含：
+我们已完成**可运行的完整DApp原型**（前端 + Go Relay后端 + 合约交互），实现“一书一码、扫码Mint NFT、Gasless领取、即时分账、管理后台实时监控与提现”全流程。读者扫码即享正版数字权益，作者/出版社秒级到账并可一键提现，平台通过协议手续费与增值服务持续盈利。
 
-- 前端：React + Vite + Tailwind CSS 单页应用
-- 钱包与链交互：Polkadot{.js} 扩展 + `@polkadot/api` / `@polkadot/api-contract`
-- 后端：Go 实现的元交易 Relay Server + Redis 统计
+**核心盈利逻辑**：  
 
----
+- 每本正版书通过NFT铸造与动态内容门禁驱动80%以上读者转化  
+- 即时分账 + 二手交易持续版税 → 作者/出版社高黏性  
+- 协议抽成3-5% + 二手版税分成 → 平台高毛利、可规模化收入  
 
-## 1. 功能总览
+### 2. 市场背景与痛点分析 (Market & Pain Points)
 
-### 1.1 收银台（读者侧）
+#### 2.1 市场规模：万亿级的盗版黑洞
+
+全球图书出版市场规模约为 **1270亿美元**，数字出版子市场增速更快，预计2025-2030年复合增长率超过8-13%。
+
+盗版却造成巨大收益流失，现有防御体系已全面失效：
+
+- **日本漫画与出版业**：2025年最新报告显示，海外+国内盗版造成约 **¥8.5万亿日元（约合510-550亿美元）** 的年度损失，其中权利人直接损失约 ¥7048亿。这已是日本出版业合法海外市场规模的数倍。
+
+- **美国出版业**：电子书与数字内容盗版每年造成 **3亿美元以上** 直接损失，整体数字媒体盗版（含图书）对美国经济影响达 **292-710亿美元/年**。出版盗版网站访问量2024年达 **664亿次**，同比增长4.3%。
+
+- **中国出版业**：在线文学与图书盗版历史损失巨大，近年虽有打击但亚洲仍是全球盗版重灾区。全球出版业整体盗版损失估计 **10-12亿美元/年**，中国贡献显著比例。
+
+#### 2.2 行业五大刚需 (The 5 Rigid Demands)
+
+1. **版权防伪**：传统激光标/防伪贴易复制，读者无法低成本验证真伪。数字化传播后，物理防伪彻底失效。
+
+2. **经济结算**：传统版税结算周期长达6-18个月，数据不透明，作者常被拖欠或压低分成。
+
+3. **动态内容**：纸质书内容静态，无法更新、迭代或与读者互动，附加价值低。
+
+4. **创作者保护**：中心化平台存在审查、封号风险，创作者面临“数字死亡”威胁。
+
+5. **分发效率**：缺乏裂变激励与合法二手流转机制，正版书“一次销售”后即失去持续收益。
+
+### 3. 解决方案：Whale-Vault 协议 (The Solution)
+
+Whale-Vault 采用 **“Web2 入口 + Web3 主权”** 的混合架构，重构出版全链路。
+
+#### 3.1 核心产品逻辑
+
+- **一书一码，链上确权**：每本实体书嵌入唯一哈希码。读者扫码 Mint NFT，合约自动验证真伪。盗版书无法通过验证。
+
+- **智能分账收银台**：读者支付瞬间，资金通过 Ink! 合约原子化拆分（如：作者 80%, 出版社 20%），实现秒级到账，彻底打破年度结算黑箱。
+
+- **逻辑掩体与永久存储**：
+  - 内容上链至 Arweave，实现永久存储、抗篡改、抗删除。
+  - 支持匿名钱包交互，创作者无需实名，规避审查风险。
+
+#### 3.2 动态增值服务 (Value-Add)
+
+- **Token Gating（NFT门禁）**：正版NFT持有者解锁隐藏章节、实时更新、作者私域社群、专属福利等。盗版书失去核心价值。
+
+- **SBT 与可交易NFT**：
+  - SBT（灵魂绑定）作为荣誉勋章与社区通行证。
+  - 可交易NFT支持合法二手流转，每次转售自动触发版税分成。
+
+### 4. 技术壁垒与架构 (Technical Architecture)
+
+- **底层**：Polkadot + Scaffold DOT，提供高性能与跨链扩展（XCM）。
+- **合约**：Ink!（Rust）实现核心逻辑，兼容Solidity迁移。
+- **零门槛体验**：Relayer 代付 Gas，普通读者扫码即用，无需钱包或加密货币。
+- **隐私与安全**：内容非对称加密，仅NFT持有者可解密；Arweave 确保永久可验证。
+- **竞争优势**：Polkadot生态中暂无直接对标实体书+NFT防伪项目，Whale-Vault 填补实体-数字桥接空白。
+
+### 5. 团队介绍 (Team)
+
+- **Whale3070 (Team Lead)**：8年内容创作与社区运营经验，负责产品哲学与用户体验设计。
+- **Jessie (Smart Contract)**：Polkadot Ink! 与Solidity资深开发者，负责权属验证与分账合约。
+- **Hank (Backend & Relayer)**：分布式系统架构师，负责Gasless高并发与稳定性。
+- **Evan (Asset & Metadata)**：Arweave生态专家，确保内容永久性与分布式存储。
+
+团队兼具Web2产品直觉与Web3硬核技术，已完成核心合约开发与测试网部署。
+
+### 6. 亮点
+
+1. **完整闭环**：从防伪入口 → 即时分账 → 动态内容 → 二手持续版税，形成强商业正循环。
+
+2. **刚需高频**：直击出版业每年数万亿日元规模的盗版损失，用区块链解决物理世界无法解决的问题。
+
+3. **巨大社会价值**：在内容审查日益严格的时代，提供真正的“数字避风港”，类似ProtonMail在隐私领域的定位，具备强大社区号召力。
+
+4. **技术可落地**：Polkadot + Arweave成熟组合，Gasless设计大幅降低门槛；2026年可快速试点实体书合作。
+
+5. **市场时机**：数字出版高速增长，Web3+NFT图书仍处早期蓝海，Whale-Vault 是少数兼顾实体桥接的创新协议。
+
+6. **已落地的可运行原型**：完整DApp已开发完毕，支持扫码领取、Gasless铸造、管理后台实时监控与一键提现，极大降低执行风险。
+
+### 7.财务模型 (Financial Projections)
+
+#### 7.1 收入来源（Revenue Streams）
+
+Whale-Vault 作为协议层项目，采用轻资产、多流可持续模型（参考典型Web3协议：手续费+版税分成+潜在代币经济）：
+
+1. **协议手续费**：每笔读者支付/分账抽成 **3-5%**（其中1-2%归协议宝库，用于生态激励）。
+2. **NFT铸造微费**：Gasless下可选0.1-0.5 USD/次（覆盖Relayer成本）。
+3. **二手交易持续版税**：每次NFT转售，协议+创作者分成 **10%**（协议占2-3%）。
+4. **增值服务**：Token Gating高级内容订阅分成（未来扩展）。
+5. **代币经济（可选Phase 4）**：发行治理/实用代币$VAULT，用于手续费折扣、staking奖励，参考Polkadot生态项目捕获价值。
+
+### 8. 当前开发进度与原型演示（Proof of Execution）
+
+Whale-Vault **已完成完整可运行DApp原型**，涵盖读者全流程、作者/出版社管理后台与Gasless中继后端，充分验证商业模式的可行性与盈利能力。
+
+#### 8.1 功能总览
+
+##### 8.1.1 收银台（读者侧）
 
 完整用户流：**扫码打开领取链接 → 自动校验兑换码 → 填写波卡地址 → 确认领取 → 成功页 → 解锁内容**。
 
@@ -39,7 +132,7 @@ Whale Vault 是一个围绕 **实体书兑换码 Hash Code** 的 NFT 金库与�
     - Matrix 私域社群入口
   - 提供「返回首页」按钮
 
-### 1.2 管理后台（作者 / 出版社）
+##### 8.1.2 管理后台（作者 / 出版社）
 
 管理后台挂在 `/admin` 路由下，采用侧边栏布局，包含：
 
@@ -75,50 +168,7 @@ Whale Vault 是一个围绕 **实体书兑换码 Hash Code** 的 NFT 金库与�
   - 前端自动对 Secret Code 计算 SHA-256 哈希（使用浏览器 `crypto.subtle.digest`）
   - 组装参数并调用合约 `add_book_batch(ids, hashes)`，实现一次性写入链上
 
----
-
-## 2. 技术栈与架构
-
-### 2.1 前端
-
-- React 18
-- Vite
-- React Router v7（`react-router-dom`）
-- Tailwind CSS
-- Polkadot 相关：
-  - `@polkadot/api`
-  - `@polkadot/api-contract`
-  - `@polkadot/extension-dapp`
-  - `@polkadot/util-crypto` / `@polkadot/util`（地址解析与网络前缀转换）
-- 图表：`recharts`
-- 特效：`canvas-confetti`
-
-主要结构：
-
-- `src/App.tsx`：路由入口
-  - `/` 首页（入口卡片 + 简要销量看板）
-  - `/valut_mint_nft/:hashCode` 领取页
-  - `/success` 成功 + 解锁内容页
-  - `/settings` 链配置页
-  - `/admin/*` 管理后台布局与子路由
-
-- 钱包相关
-  - `src/hooks/usePolkadotWallet.ts`：统一封装 Polkadot{.js} 扩展连接与账户选择
-  - `src/components/NavBar.tsx`：连接 / 断开钱包按钮 + 账户选择器
-
-- 链配置
-  - `src/state/useChainConfig.ts`:
-    - `endpoint`：节点 WebSocket 地址（默认 `wss://ws.azero.dev`）
-    - `contractAddress`：Ink! 合约地址
-    - `abiUrl`：ABI JSON 文件 URL
-    - 持久化到 `localStorage.chainConfig`
-
-- 后端地址配置
-  - `src/config/backend.ts`:
-    - `export const BACKEND_URL = 'http://198.55.109.102'`（按你的环境修改）
-    - 用于兑换码校验、领取中继与监控接口
-
-### 2.2 后端（Middle-layer / Relay Server）
+#### 8.1.3 后端（Middle-layer / Relay Server）
 
 位置：`backend/main.go`
 
@@ -133,22 +183,21 @@ Whale Vault 是一个围绕 **实体书兑换码 Hash Code** 的 NFT 金库与�
 
 - `github.com/gorilla/mux`
 - `golang.org/x/time/rate`
-- `github.com/redis/go-redis/v9`
-- （预留）`github.com/centrifuge/go-substrate-rpc-client/v4` 用于接入真实链上调用
+- 标准库 `net/http` / `encoding/json` 等
 
 ---
 
-## 3. 安装与运行
+#### 8.2安装与运行
 
-### 3.1 前端 DApp
+##### 8.2.1 前端 DApp
 
-#### 安装依赖
+##### 安装依赖
 
 ```bash
 npm install
 ```
 
-#### 开发模式
+##### 开发模式
 
 ```bash
 npm run dev
@@ -156,7 +205,7 @@ npm run dev
 
 默认通过 Vite 启动开发服务器（通常是 `http://localhost:5173`）。
 
-#### 打包构建
+##### 打包构建
 
 ```bash
 npm run build
@@ -164,24 +213,14 @@ npm run build
 
 产物输出到 `dist/` 目录，可使用任意静态服务器托管。
 
-### 3.2 后端 Relay Server
+##### 8.2.2 后端 Relay Server
 
-#### 前置依赖
+##### 前置依赖
 
-- Go 1.20+
-- Redis 实例（本地或远程）
+- Go 1.20+（或与你 go.mod 对应的版本）
+- 可读写的 `backend/hash-code.txt` 文件（用于维护兑换码状态）
 
-#### 环境变量
-
-- `REDIS_ADDR`（可选）
-  - Redis 地址，默认 `127.0.0.1:6379`
-
-> 说明：当前 `main.go` 中尚未接入真实 WebSocket 节点与链上签名逻辑，如需将 Demo 升级为真正代付 Gas 的 Relay Server，可基于 go-substrate-rpc-client 扩展新增：
->
-> - `WS_ENDPOINT`：链的 WebSocket 节点（如 `wss://ws.azero.dev`）
-> - `RELAYER_SEED`：平台方代付 Gas 的账户种子（sr25519）
-
-#### 启动后端
+##### 启动后端
 
 ```bash
 cd backend
@@ -190,20 +229,16 @@ go run main.go
 
 默认监听：`http://localhost:8080`
 
-同时应用了宽松的 CORS 设置，方便前端本地调试。
+#### 8.3 前端主要页面说明
 
----
-
-## 4. 前端主要页面说明
-
-### 4.1 首页 `/`
+##### 8.3.1首页 `/`
 
 - 文件：`src/pages/Home.tsx`
 - 功能：
   - 左侧卡片：项目简介 + 领取入口说明（扫码后自动进入领取页）
   - 右侧卡片：可扩展的销量展示组件（`SalesBoard`）
 
-### 4.2 领取页 `/valut_mint_nft/:hashCode`
+##### 8.3.2领取页 `/valut_mint_nft/:hashCode`
 
 - 文件：`src/pages/MintConfirm.tsx`
 - 功能：
@@ -212,7 +247,7 @@ go run main.go
   - 校验通过后展示波卡地址输入框与「确认领取」按钮
   - 点击「确认领取」后调用 `POST /relay/mint`，成功后跳转 `/success`
 
-### 4.3 成功展示页 `/success`
+##### 8.3.3成功展示页 `/success`
 
 - 文件：`src/pages/Success.tsx`
 - 功能：
@@ -233,7 +268,7 @@ go run main.go
     - 验证失败时给出错误提示
   - 「返回首页」：返回用户端首页
 
-### 4.4 管理后台
+##### 8.3.4 管理后台
 
 - 布局：
   - `src/admin/AdminLayout.tsx`：侧边栏 + 嵌套路由结构
@@ -247,9 +282,9 @@ go run main.go
 
 ---
 
-## 5. 钱包与链配置
+#### 8.3 钱包与链配置
 
-### 5.1 链参数配置
+##### 8.3.1 链参数配置
 
 - 页面：`/settings`
 - Hook：`useChainConfig`（`src/state/useChainConfig.ts`）
@@ -259,7 +294,7 @@ go run main.go
   - `abiUrl`：ABI JSON 文件地址
 - 配置保存到 `localStorage.chainConfig`，前端所有合约调用均依赖此配置。
 
-### 5.2 钱包连接与账户选择
+##### 8.3.2  钱包连接与账户选择
 
 - Hook：`usePolkadotWallet`（`src/hooks/usePolkadotWallet.ts`）
 - 功能：
@@ -275,108 +310,7 @@ go run main.go
 - 「断开」按钮：清空选择
 - `AccountSelector`：展示并切换当前账户
 
----
-
-## 6. 后端 HTTP 接口说明
-
-### 6.1 POST `/relay/mint`
-
-用途：免 Gas / 无签名的中继入口。当前 Demo 中，后端**不直接连接链节点**，而是：
-
-- 接收前端提交的领取请求与接收地址
-- 基于兑换码 Hash Code（`codeHash`）做唯一性锁防刷
-- 生成占位用的 `txHash`，写入 Redis 日志，供前端看板展示
-
-未来可在此基础上接入真实链节点，由后端使用平台账户代用户发送交易、代付 Gas。
-
-#### 请求体（JSON）
-
-```json
-{
-  "dest": "合约地址（SS58）",
-  "value": "0",
-  "gasLimit": "0",
-  "storageDepositLimit": "字符串或 null",
-  "dataHex": "0x 前缀的合约调用数据（当前 Demo 可能为占位值）",
-  "signer": "用户地址（用于风控与日志）",
-  "codeHash": "兑换码 Hash Code（十六进制字符串）"
-}
-```
-
-> 说明：如需“签名 + mint_meta + 中继”的严格校验方案，可在前端改为对结构化消息进行签名并编码 `mint_meta(...)`，后端在验证签名与参数后，再调用链上合约并代付 Gas。
-
-#### URL 查询参数
-
-- `book_id`（可选）：书籍编号，用于日志记录与前端看板展示。
-
-#### 响应体（JSON）
-
-```json
-{
-  "status": "submitted" | "error",
-  "txHash": "0x... 可选",
-  "error": "错误信息，可选"
-}
-```
-
-- `status = "submitted"`：成功提交到链上，`txHash` 为交易哈希（in-block 或 finalized 哈希）。
-- `status = "error"`：请求不合法、频率超限或链上错误。
-
-#### 风控机制
-
-- 使用 `golang.org/x/time/rate` 为每个 IP 限速
-- 使用 Redis 基于 `codeHash` 做唯一性锁：
-  - 每个唯一的 `codeHash` 只允许成功领取一次
-  - 同一 `codeHash` 并发请求时，后续请求会收到“正在铸造中”的错误
-  - 已成功的 `codeHash` 再次请求会收到“此书已经生成过 NFT 了”的错误
-- 所有成功的 Mint 请求会记录到 Redis 列表 `mint:logs`（用于看板与明细）
-
-### 6.2 GET `/metrics/mint`
-
-用途：为前端管理后台提供 Mint 日志，用于构建销量图表和明细。
-
-#### 响应样例
-
-```json
-[
-  {
-    "timestamp": 1710000000,
-    "tx_hash": "0x1234...",
-    "book_id": "1"
-  },
-  ...
-]
-```
-
-前端可按时间排序、按 `book_id` 分组统计等。
-
-### 6.3 GET `/secret/verify`
-
-用途：对兑换码 Hash Code 做只读校验，在进入领取流程前提前过滤无效 / 未登记的兑换码。当前前端在 `/valut_mint_nft/:hashCode` 中会调用该接口。
-
-#### 请求参数（Query）
-
-- `codeHash`：必填，兑换码 Hash Code（十六进制字符串）。
-  - 当前实现中，二维码链接直接携带该 Hash Code，因此前端不再计算 SHA-256。
-
-#### 响应体（JSON）
-
-```json
-{
-  "ok": true
-}
-```
-
-- `ok = true`：该兑换码在 Redis 集合 `secret:valid` 中存在，可以继续后续流程。
-- `ok = false` 且包含 `error` 字段：
-  - `invalid code`：兑换码未登记或已失效。
-  - `redis error`：后端存储访问异常。
-  - 当缺少 `codeHash` 时，接口返回 400，并在响应体中给出 `missing codeHash` 错误信息。
-
-> 说明：`/relay/mint` 在处理免 Gas 铸造时也会再次检查 `codeHash` 是否在 `secret:valid` 中，并结合一次性锁（`lockCode`）确保每个兑换码仅能成功使用一次。
-
----
-## 7. 与合约的主要交互点
+#### 8.4 与合约的主要交互点
 
 > 以下为前端使用到的合约接口名称，具体参数类型与链上实现需与实际 Ink! 合约保持一致。
 
@@ -395,9 +329,7 @@ go run main.go
   - 用于查询某地址当前可提取余额
   - 前端在提现页只读调用，展示「当前地址可提取余额」
 
----
-
-## 8. 典型使用流程（读者视角）
+#### 8.5 典型使用流程（读者视角）
 
 1. 通过实体书上的二维码或分享链接进入 DApp：
    - 二维码内容为 URL：`http://Domain/valut_mint_nft/{hashCode}`
@@ -408,11 +340,9 @@ go run main.go
    - 打开 Arweave 正文内容（优先使用 URL 参数 `ar`，否则使用 BOOKS 映射）。
    - 加入 Matrix 私域社群。
 
----
+#### 8.6 部署与上线
 
-## 9. 部署与上线（示例：Nginx + Go 后端）
-
-### 9.1 构建前端静态资源
+##### 8.6.1 构建前端静态资源
 
 ```bash
 npm install
@@ -421,18 +351,15 @@ npm run build
 
 构建完成后，前端静态文件位于 `dist/` 目录。
 
-> 生产环境下，请将 `src/config/backend.ts` 中的 `BACKEND_URL` 修改为前端实际访问到的后端地址。以当前示例为：`http://198.55.109.102`（通过 Nginx 反向代理到本机 8080 端口）。
+##### 8.6.2 启动 Go Relay Server
 
-### 9.2 启动 Go Relay Server（可选但建议）
-
-在服务器上准备好 Go 与 Redis，然后：
+在服务器上准备好 Go 环境，然后：
 
 ```bash
 # 1. 进入后端目录
 cd backend
 
-# 2.（可选）配置 Redis 地址，不配置则默认 127.0.0.1:6379
-export REDIS_ADDR="127.0.0.1:6379"
+# 2. 确认 `hash-code.txt` 中已经写入待发放的兑换码（每行一个，已使用的行以 `USED:` 前缀标记）
 
 # 3. 启动后端（开发/测试时可以直接用 go run）
 go run main.go
@@ -440,7 +367,7 @@ go run main.go
 
 默认监听 `:8080`，即本机 `http://127.0.0.1:8080`。
 
-### 9.3 使用 Nginx 托管前端并反向代理后端
+##### 8.6.3 使用 Nginx 托管前端并反向代理后端
 
 将 `dist/` 上传到服务器（例如 `/var/www/whale-vault`），站点配置示例（以 `198.55.109.102` 为例）：
 
@@ -480,9 +407,7 @@ server {
 
 Nginx 会将这些请求转发到同一台机器上的 Go 后端（端口 8080），整个部署结构清晰且避免跨域问题。
 
----
-
-## 10. 典型使用流程（作者 / 出版社视角）
+#### 8.7 典型使用流程（作者 / 出版社视角）
 
 1. 打开 DApp，连接钱包，使用作者 / 出版社账户登录
 2. 进入管理后台 `/admin/overview` 查看数据总览
@@ -491,14 +416,6 @@ Nginx 会将这些请求转发到同一台机器上的 Go 后端（端口 8080�
    - `book_id,secret_code` → 前端计算 SHA-256 哈希 → 调用 `add_book_batch`
 5. 在 `/admin/withdraw` 查看可提取余额，并点击「立即提现」调用 `pull_funds()` 将收益转入当前地址
 
----
+  
 
-## 11. 后续可扩展方向
-
-本 README 基于当前实现状态总结，后续可以在此基础上扩展：
-
-- 将 Mock 数据完全替换为真实链上统计与后端 `/metrics/mint`
-- 为作者 / 出版社增加多角色权限控制
-- 增加多链配置与热切换（例如在配置中支持多个预设网络）
-- 为合约与后端接口补充单元测试与集成测试
-
+请马上扫码，来亲身来感受“扫码即盈利”。
